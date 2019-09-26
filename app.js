@@ -3,12 +3,20 @@ const app = express()
 const port = 3000
 const SolrNode = require('solr-node')
 const cors = require('cors')
+const util = require('util')
 
 // Initiate Solr client
 const client = new SolrNode({
     host: '127.0.0.1',
     port: '8983',
-    core: 'csp-services', // give the correct core name here
+    core: 'csp-services',
+    protocol: 'http'
+})
+
+const clientpricing = new SolrNode({
+    host: '127.0.0.1',
+    port: '8983',
+    core: 'csp',
     protocol: 'http'
 })
 
@@ -64,17 +72,74 @@ app.get('/solr/query', (req, res) => {
         })
 })
 
-app.get('/solr/query/id', (req, res) => {
+app.get('/solr/query/id', async (req, res) => {
     const id = req.query.id
     // http://localhost:8983/solr/csp/select?q=id:0d73dc20-abc3-11e9-bdf9-09446c0012c4
     const objQuery = `q=id:${id}`
 
+    const payload = {
+        data: ''
+    }
+
     client.search(objQuery, (err, result) => {
         if (err) {
             console.log('Error searching ID from Solr > ', err)
-            return
+            return res.status(500).json({message: 'Record does not exist'})
         }
-        return res.status(200).json(result)
+
+        if (result.response.numFound === 0) {
+            console.log('Record does not exist!')
+            return res.status(500).json({message: 'Record does not exist'})
+        }
+
+        // Modify this to include all results when 'MoreLikeThis' feature is implemented
+        payload.data = result.response.docs[0]
+
+        const servicePricingQuery = `q=service_short_name:${payload.data.service_short_name}`
+
+        clientpricing.search(servicePricingQuery, (err, resPricing) => {
+            if (err) {
+                console.log('Error searching ID from Solr > ', err)
+                return res.status(500).json({message: 'Record does not exist'})
+            }
+
+            console.log('resPricing > ', resPricing)
+
+            // Even if pricing does not exist, we still want to return the payload
+            if (resPricing.response.numFound === 0) {
+                console.log('Pricing record does not exist, return the payload')
+                return res.status(200).json(payload)
+            }
+
+            const newVals = resPricing.response.docs.map((y) => {
+                return {
+                    region: y.region,
+                    city: y.city,
+                    pricingValue: JSON.parse(y.pricing)
+                }
+            })
+
+            const newArr = newVals.map((z) => {
+                const pricingObjects = z.pricingValue
+                let pricingNewArray = []
+
+                for (const val in pricingObjects) {
+                    const obj = {}
+                    obj.description = val
+                    obj.price = pricingObjects[val]['price']
+                    // console.log(Number(obj.price).toFixed(4))
+                    pricingNewArray.push(obj)
+                }
+
+                z.pricingValue = pricingNewArray
+
+                return z
+            })
+
+            payload.data.pricing = newArr
+
+            return res.status(200).json(payload)
+        })
     })
 })
 
@@ -83,7 +148,7 @@ app.get('/solr/query/service_full_name', (req, res) => {
     const pageNumber = parseInt(req.query.page) || 0
     const rowsPerPage = parseInt(req.query.per_page) || 10
 
-    const page = pageNumber * rowsPerPage
+    // const page = pageNumber * rowsPerPage
 
     const objQuery = `q=service_full_name:${service_full_name}`
     // &facet=true&json.nl=map&facet.count=1&start=${page}&rows=${rowsPerPage}`
@@ -92,7 +157,7 @@ app.get('/solr/query/service_full_name', (req, res) => {
     client.search(objQuery, (err, result) => {
         if (err) {
             console.log('Error searching service_name from Solr > ', err)
-            return
+            return res.status(500).json({message: 'Record does not exist'})
         }
         return res.status(200).json(result)
     })
