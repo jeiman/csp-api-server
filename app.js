@@ -62,6 +62,7 @@ app.get('/solr/query', (req, res) => {
     //     })
     //     .start(page)
     //     .rows(per_page)
+
     // Search documents using objQuery
     client.search(objQuery, (err, result) => {
         if (err) {
@@ -74,7 +75,6 @@ app.get('/solr/query', (req, res) => {
 
 app.get('/solr/query/id', async (req, res) => {
     const id = req.query.id
-    // http://localhost:8983/solr/csp/select?q=id:0d73dc20-abc3-11e9-bdf9-09446c0012c4
     const objQuery = `q=id:${id}`
 
     const payload = {
@@ -102,8 +102,6 @@ app.get('/solr/query/id', async (req, res) => {
                 console.log('Error searching ID from Solr > ', err)
                 return res.status(500).json({message: 'Record does not exist'})
             }
-
-            console.log('resPricing > ', resPricing)
 
             // Even if pricing does not exist, we still want to return the payload
             if (resPricing.response.numFound === 0) {
@@ -145,15 +143,7 @@ app.get('/solr/query/id', async (req, res) => {
 
 app.get('/solr/query/service_full_name', (req, res) => {
     const service_full_name = req.query.service_full_name
-    const pageNumber = parseInt(req.query.page) || 0
-    const rowsPerPage = parseInt(req.query.per_page) || 10
-
-    // const page = pageNumber * rowsPerPage
-
     const objQuery = `q=service_full_name:${service_full_name}`
-    // &facet=true&json.nl=map&facet.count=1&start=${page}&rows=${rowsPerPage}`
-    // &facet=true&facet.pivot=category,service_full_name,region&json.nl=map&facet.count=1`
-
     client.search(objQuery, (err, result) => {
         if (err) {
             console.log('Error searching service_name from Solr > ', err)
