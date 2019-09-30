@@ -1,9 +1,13 @@
 const express = require('express')
 const app = express()
-const port = 3000
 const SolrNode = require('solr-node')
 const cors = require('cors')
 const util = require('util')
+const dotenv =  require('dotenv')
+const path = require('path')
+
+const dotenvConfig = dotenv.config() // Load environment variables
+const config = require(path.resolve(__dirname, './config', process.env.NODE_ENV || 'development'))
 
 // Initiate Solr client
 const client = new SolrNode({
@@ -153,4 +157,11 @@ app.get('/solr/query/service_full_name', (req, res) => {
     })
 })
 
-app.listen(port, () => console.log(`CSP App listening on port ${port}!`))
+app.listen(config.app.port, config.app.host, (err) => {
+    if (err) {
+        throw err
+    }
+
+    console.log(`CSP Web API running at http://${config.app.host}:${config.app.port} in ${app.get('env')}`)
+    console.log(' Press CTRL-C to stop \n')
+})
