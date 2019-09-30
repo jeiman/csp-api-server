@@ -42,7 +42,8 @@ app.use(cors({
 }))
 
 app.get('/', async (req, res) => {
-    return res.send('OK')
+    console.log('Welcome ping!')
+    return res.send('Welcome to the API!')
 })
 
 app.get('/solr/query', (req, res) => {
