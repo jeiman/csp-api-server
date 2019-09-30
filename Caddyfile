@@ -1,6 +1,6 @@
 api.xaron.xyz {
   # API load balancer
-  proxy / localhost:3000 {
+  proxy / 68.183.34.142:3000 {
     transparent
   }
 }
