@@ -9,16 +9,18 @@ const path = require('path')
 const dotenvConfig = dotenv.config() // Load environment variables
 const config = require(path.resolve(__dirname, './config', process.env.NODE_ENV || 'development'))
 
+const solrHost = process.env.NODE_ENV === 'development' ? '127.0.0.1' : '178.128.36.225'
+
 // Initiate Solr client
 const client = new SolrNode({
-    host: '127.0.0.1',
+    host: solrHost,
     port: '8983',
     core: 'csp-services',
     protocol: 'http'
 })
 
 const clientpricing = new SolrNode({
-    host: '127.0.0.1',
+    host: solrHost,
     port: '8983',
     core: 'csp',
     protocol: 'http'
@@ -33,7 +35,11 @@ const origins = [
     'https://dev.csp.com:8083',
     'http://dev.csp.com:8084',
     'https://dev.csp.com:8084',
-    'http://dev.csp.com:3000'
+    'http://dev.csp.com:3000',
+    'http://cloudtool.xyz',
+    'https://cloudtool.xyz',
+    'http://www.cloudtool.xyz',
+    'https://www.cloudtool.xyz'
 ]
 
 app.use(cors({
