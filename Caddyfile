@@ -1,9 +1,0 @@
-api.xaron.xyz {
-  # API load balancer
-  proxy / 127.0.0.1:3000 {
-    transparent
-  }
-}
-
-# root /root/app/csp-api-server/dist
-# index index.html
